@@ -16,10 +16,23 @@ document.addEventListener('mouseover', (event) => {
     highlightedElement = element;
 });
 
-// Listen for click event to capture the HTML of the highlighted element
+// Listen for click event to capture the HTML and CSS of the highlighted element
 document.addEventListener('click', () => {
     if (highlightedElement) {
         const html = highlightedElement.outerHTML;  // Capture the outer HTML of the highlighted element
-        chrome.runtime.sendMessage({ action: 'captureComponent', html: html });
+        const computedStyle = window.getComputedStyle(highlightedElement);  // Get the computed styles of the element
+
+        // Prepare the CSS object to send
+        const styles = {};
+        const properties = [
+            'backgroundColor', 'color', 'border', 'width', 'height', 'fontSize',
+            'margin', 'padding', 'borderRadius', 'fontFamily', 'fontWeight'
+        ];
+
+        properties.forEach(property => {
+            styles[property] = computedStyle[property];
+        });
+
+        chrome.runtime.sendMessage({ action: 'captureComponent', html: html, styles: styles });
     }
 });
