@@ -3,7 +3,7 @@
     "name": "Element Highlighter",
     "version": "1.0",
     "description": "Highlight the component currently under mouse hover",
-    "permissions": ["activeTab"],
+    "permissions": ["storage", "activeTab", "scripting"],
     "background": {
         "service_worker": "background.js"
     },

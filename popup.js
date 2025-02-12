@@ -1,26 +1,13 @@
-document.getElementById("toggle-highlight").addEventListener("click", () => {
-    console.log("Button clicked"); // Check if this logs when the button is clicked
-
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        const tabId = tabs[0].id;
-
-        // Toggle highlighting by executing content script
-        chrome.scripting.executeScript({
-            target: { tabId: tabId },
-            func: toggleHighlighting
+document.addEventListener("DOMContentLoaded", () => {
+    // Add listener to the "Show HTML" button
+    document.getElementById("show-html").addEventListener("click", () => {
+        chrome.storage.local.get("capturedHtml", (data) => {
+            const htmlOutput = document.getElementById("html-output");
+            if (data.capturedHtml) {
+                htmlOutput.value = data.capturedHtml;  // Display the captured HTML in the textarea
+            } else {
+                htmlOutput.value = "No HTML captured yet.";
+            }
         });
     });
 });
-
-function toggleHighlighting() {
-    const body = document.body;
-
-    // Check if there's already a highlight class on body
-    if (!body.classList.contains('highlighting-active')) {
-        body.classList.add('highlighting-active');
-        console.log("Highlighting enabled");
-    } else {
-        body.classList.remove('highlighting-active');
-        console.log("Highlighting disabled");
-    }
-}
