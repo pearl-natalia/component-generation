@@ -1,0 +1,20 @@
+{
+    "manifest_version": 3,
+    "name": "Element Highlighter",
+    "version": "1.0",
+    "description": "Highlight the component currently under mouse hover",
+    "permissions": ["activeTab"],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "content_scripts": [
+        {
+            "matches": ["<all_urls>"],
+            "js": ["content.js"],
+            "css": ["styles.css"]
+        }
+    ],
+    "action": {
+        "default_popup": "popup.html"
+    }
+}
