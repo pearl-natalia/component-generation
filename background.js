@@ -8,4 +8,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             console.log("Captured HTML and CSS saved to local storage");
         });
     }
+
+    if (message.action === "downloadScreenshot") {
+        const url = message.image;
+
+        chrome.downloads.download({
+            url: url,
+            filename: "element_screenshot.png",
+            saveAs: true  // Prompts user to save the file
+        });
+    }
 });
