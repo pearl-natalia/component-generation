@@ -1,25 +1,36 @@
 {
-    "manifest_version": 3,
-    "name": "Element Highlighter",
-    "version": "1.0",
-    "description": "Highlight the component currently under mouse hover",
-    "permissions": ["storage", "activeTab", "scripting", "downloads"],
-    "background": {
-      "service_worker": "background.js"
-    },
-    "content_scripts": [
-      {
-        "matches": ["<all_urls>"],
-        "js": ["libs/html2canvas.min.js", "content.js"],
-        "css": ["styles.css"]
-      }
-    ],
-    "action": {
-      "default_popup": "popup.html"
-    },
-    "content_security_policy": {
-        "script-src": "'self' 'unsafe-eval'",
-        "object-src": "'self'"
-      }
+  "manifest_version": 3,
+  "name": "Element Highlighter",
+  "version": "1.0",
+  "description": "Highlight the component currently under mouse hover",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "downloads"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "libs/html2canvas.min.js",
+        "content.js"
+      ],
+      "css": [
+        "styles.css"
+      ]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_security_policy": {
+    "script-src": "'self' 'unsafe-eval'",
+    "object-src": "'self'"
   }
-  
+}

@@ -2,6 +2,8 @@ import os
 from dotenv import load_dotenv
 import google.generativeai as genai
 from PIL import Image
+from render import render_html, compare_images
+
 
 # Setup
 load_dotenv()
@@ -34,7 +36,7 @@ context =   """
             as well as a render of the component. Your goal is to recreate this component. For all image components, don't recreate the content inside the image. Just fill the parent div of the img with grey.
             For any image, comment out the html for the <img> component, add a comment above saying "Place image here". Ensure the css is encapsulated into the html. Rename the divs to be more general.
             And instead, add an svg and text saying "image placeholder". 
-            Add a comment at the start and end of the placeholder code saying "placeholder image". For all urls, just convert them into empty strings (i.e. svg = "").
+            Add a comment at the start and end of the placeholder code saying "placeholder image". For all urls, just convert them into empty strings (i.e. svg = ""). Important: only output the code, no additional text.
             """
 # Keep doing actions like these to make the component as general and template like as possible, replacing text with header1, header2, etc etc. 
 # Rename the divs etc to make more general and template like. 
@@ -57,11 +59,11 @@ css = """{
 
 task =  """ 
         Here is the html: {html}. Here is the css: {css}. 
-        The image is how the component should look.
+        The rendered image provided is how the component should look.
         """ 
 
 # Multimodal: Upload Image
-image_path = "./component.png" 
+image_path = "images/tmp.png" 
 try:
     image = Image.open(image_path)
 except FileNotFoundError:
@@ -74,13 +76,28 @@ except Exception as e:
 
 # Send prompt
 prompt = "Here is your role: {context}. Here is your task: {task}."  
+def load_file_content(filepath):
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:  # Explicit encoding
+            return f.read()
+    except FileNotFoundError:
+        print(f"Error: File not found at {filepath}")
+        return None
+    except Exception as e:
+        print(f"Error reading file {filepath}: {e}")
+        return None
 
+tmp_html = load_file_content('./sample.html')
+tmp_css = load_file_content('./sample.css')
 contents = [
-    context,
-    prompt,
+    # context,
+    # prompt,
+    "generate me html and css to recreate the following component. {tmp_html} {tmp_css}. Integrate css into html. Replace all <img> components with a plain div that says 'placeholder'. Do not recreate the <img> components.",
     image
 ]
 
 print('Sending...')
-response = chat_session.send_message(contents)
-print(response.text)
+generated_html = chat_session.send_message(contents).text
+render_html(generated_html)
+print(generated_html)
+compare_images("images/generated_component.png", image_path)
