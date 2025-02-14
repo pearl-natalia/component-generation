@@ -49,12 +49,19 @@ document.addEventListener("click", (event) => {
     }
 
     if (typeof html2canvas !== "undefined") {
+        const element = document.querySelector(".highlighted");
+        const cloned = element.cloneNode(true);
+        document.body.appendChild(cloned);
+
 
         html2canvas(document.querySelector(".highlighted"), {
             useCORS: true, // Allows capturing images from external sources (if CORS is enabled)
             logging: false, // Disable console logs from html2canvas
-            scale: window.devicePixelRatio // Higher quality screenshot
+            scale: window.devicePixelRatio, // Higher quality screenshot
+            backgroundColor: null
         }).then((canvas) => {
+            document.body.removeChild(cloned);
+            document.body.appendChild(canvas);
             const imageData = canvas.toDataURL("image/png"); // Convert to base64 image
 
             // Send captured image data to background script
