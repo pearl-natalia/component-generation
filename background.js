@@ -9,13 +9,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         });
     }
 
-    if (message.action === "downloadScreenshot") {
-        const url = message.image;
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+        if (message.action === "captureScreen") {
+            const url = message.screenshot;
 
-        chrome.downloads.download({
-            url: url,
-            filename: "element_screenshot.png",
-            saveAs: true  // Prompts user to save the file
-        });
-    }
+            // Trigger download
+            chrome.downloads.download({
+                url: url,
+                filename: "component.png",
+                saveAs: true // Prompts user to save the file
+            });
+        }
+    });
+
 });
+
