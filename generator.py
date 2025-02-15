@@ -89,15 +89,43 @@ def load_file_content(filepath):
 
 tmp_html = load_file_content('./sample.html')
 tmp_css = load_file_content('./sample.css')
+history = [] 
 contents = [
     # context,
     # prompt,
-    "generate me html and css to recreate the following component. {tmp_html} {tmp_css}. Integrate css into html. Replace all <img> components with a plain div that says 'placeholder'. Do not recreate the <img> components.",
+    "generate me html and css to recreate the following component. {tmp_html} {tmp_css}. Integrate css into html. Replace all <img> components with a plain div that says 'placeholder' in the center. Do not recreate the <img> components. Ensure all the colours match the image, including the font colours. Ensure the dimensions are the same and match the image. Goal is to recreate the image with html + css.",
     image
 ]
 
 print('Sending...')
 generated_html = chat_session.send_message(contents).text
+
+with open("generated.html", "w", encoding="utf-8") as file:
+    file.write(generated_html)
+
 render_html(generated_html)
 print(generated_html)
 compare_images("images/generated_component.png", image_path)
+
+
+history.append({"request":"generate me html and css to recreate the following component. Integrate css into html. Replace all <img> components with a plain div that says 'placeholder' in the center. Do not recreate the <img> components. Ensure all the colours match the image, including the font colours. Ensure the dimensions are the same and match the image. Goal is to recreate the image with html + css.", "response": generated_html})
+
+new_html = load_file_content('./generated.html')
+
+contents = [
+    # context,
+    # prompt,
+    f"Adjust the following css colours: {new_html} so that the corresponding image: {Image.open('images/generated_component.png')} has font colourd that match the font colours the desired image: {image}. Extract pixels to get yhe exact same font colours. Use inline style elements to directory change the colour of the text.",
+    f"Here is the chat history to understand the work done before: {history[0]}"
+]
+
+generated_html = chat_session.send_message(contents).text
+
+with open("generated.html", "w", encoding="utf-8") as file:
+    file.write(generated_html)
+
+render_html(generated_html)
+print(generated_html)
+compare_images("images/generated_component.png", image_path)
+
+
