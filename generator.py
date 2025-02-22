@@ -4,7 +4,7 @@ from PIL import Image
 from dotenv import load_dotenv
 from render import render_html, load_file_content
 
-# Setup
+# Model Setup
 load_dotenv()
 gemini_api_key = os.getenv("GEMINI_FLASH_API_KEY")
 genai.configure(api_key=gemini_api_key)
@@ -16,14 +16,15 @@ generation_config = {
   "response_mime_type": "text/plain",
 }
 
-# Model initialization
 model = genai.GenerativeModel(
   model_name="gemini-2.0-flash",
   generation_config=generation_config,
 )
+history = []
+chat_session = model.start_chat()
+
 
 # Setting up generator
-history = [] 
 reference_img_path = "output/reference.png"
 generated_image_path = "output/generated.png"
 generated_html_path = "output/generated.html"
@@ -34,6 +35,14 @@ def generate_history_prompt():
     for i, message in enumerate(history, start=1):
         history_prompt += f"\nIteration {i}: {message}"
         return history_prompt
+
+def process_results(instruction):
+    generated_html = re.sub(r'^```html\s*|```$', '', chat_session.send_message(contents).text)
+    history.append({"request": instruction, "response": generated_html})
+    with open(generated_html_path, "w", encoding="utf-8") as file:
+        file.write(generated_html)
+    render_html(generated_html, generated_image_path, reference_img_path)
+
 
 # Few shot learning
 example_input_html = load_file_content('few-shot-learning/sample1/sample-input1.html')
@@ -52,10 +61,6 @@ def example_prompt(n):
                 """
     return exmaple
 
-chat_session = model.start_chat(history=[
-    # genai.Message(role="user", text=sample_prompt),
-    # genai.Message(role="model", text=sample_output_html)
-])
 
 # ----- Iteration 1 -----
 print('1')
@@ -79,15 +84,10 @@ contents = [
     reference_img,
     sample_input_img,
     sample_output_img
-
 ]
 
 # Processing results
-generated_html = re.sub(r'^```html\s*|```$', '', chat_session.send_message(contents).text)
-history.append({"request": instruction_1, "response": generated_html})
-with open(generated_html_path, "w", encoding="utf-8") as file:
-    file.write(generated_html)
-render_html(generated_html, generated_image_path, reference_img_path)
+process_results(instruction_1)
 
 
 # ----- Iteration 2 -----
@@ -119,11 +119,7 @@ contents = [
 ]
 
 # Processing results
-generated_html = re.sub(r'^```html\s*|```$', '', chat_session.send_message(contents).text)
-history.append({"request": instruction_2, "response": generated_html})
-with open(generated_html_path, "w", encoding="utf-8") as file:
-    file.write(generated_html)
-render_html(generated_html, generated_image_path, reference_img_path)
+process_results(instruction_2)
 
 
 # ----- Iteration 3 -----
@@ -144,8 +140,4 @@ contents = [
 ]
 
 # Processing results
-generated_html = re.sub(r'^```html\s*|```$', '', chat_session.send_message(contents).text)
-history.append({"request": instruction_3, "response": generated_html})
-with open(generated_html_path, "w", encoding="utf-8") as file:
-    file.write(generated_html)
-render_html(generated_html, generated_image_path, reference_img_path)
+process_results(instruction_3)
