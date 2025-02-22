@@ -6,7 +6,6 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 
-
 def render_html(html, output_image_path, reference_img_path):
     # Setup Selenium WebDriver
     options = Options()

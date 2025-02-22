@@ -7,6 +7,27 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         chrome.storage.local.set({ capturedHtml: message.html, capturedStyles: message.styles }, () => {
             console.log("Captured HTML and CSS saved to local storage");
         });
+
+        // send to backend
+        if (message.action === "captureComponent") {
+            const html = document.body.innerHTML; // Capture full page HTML
+            const styles = [...document.styleSheets].map((sheet) => {
+                try {
+                    return [...sheet.cssRules].map(rule => rule.cssText).join("\n");
+                } catch (e) {
+                    return ""; // Skip inaccessible stylesheets
+                }
+            }).join("\n");
+
+            fetch("http://127.0.0.1:5000/upload", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ html, styles })
+            })
+                .then(response => response.json())
+                .then(data => console.log("Response from backend:", data))
+                .catch(error => console.error("Error:", error));
+        }
     }
 
     let lastExecutionTime = 0; // Time of the last executed action

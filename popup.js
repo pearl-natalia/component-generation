@@ -1,22 +1,20 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // Add listener to the "Show HTML & CSS" button
-    document.getElementById("show-html").addEventListener("click", () => {
+    document.getElementById("generate").addEventListener("click", () => {
         chrome.storage.local.get(["capturedHtml", "capturedStyles"], (data) => {
-            const htmlOutput = document.getElementById("html-output");
-            const cssOutput = document.getElementById("css-output");
-
-            if (data.capturedHtml) {
-                htmlOutput.value = data.capturedHtml;  // Display the captured HTML in the textarea
-            } else {
-                htmlOutput.value = "No HTML captured yet.";
+            if (!data.capturedHtml || !data.capturedStyles) {
+                console.log("No HTML or CSS captured yet.");
+                return;
             }
 
-            if (data.capturedStyles) {
-                // Format the styles as a JSON string for better readability
-                cssOutput.value = JSON.stringify(data.capturedStyles, null, 2);  
-            } else {
-                cssOutput.value = "No CSS captured yet.";
-            }
+            // Send data to Flask backend
+            fetch("http://127.0.0.1:5000/upload", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ html: data.capturedHtml, styles: data.capturedStyles })
+            })
+                .then(response => response.json())
+                .then(data => console.log("Response from backend:", data))
+                .catch(error => console.error("Error:", error));
         });
     });
 });
