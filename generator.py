@@ -1,9 +1,8 @@
-import os
-from dotenv import load_dotenv
+import os, re
 import google.generativeai as genai
 from PIL import Image
-from render import render_html, compare_images
-
+from dotenv import load_dotenv
+from render import render_html, load_file_content
 
 # Setup
 load_dotenv()
@@ -22,110 +21,131 @@ model = genai.GenerativeModel(
   model_name="gemini-2.0-flash",
   generation_config=generation_config,
 )
-example_prompt = "What is the capital of France?"
-example_response = "The capital of France is Paris."
+
+# Setting up generator
+history = [] 
+reference_img_path = "data/reference.png"
+generated_image_path = "data/generated.png"
+generated_html_path = "data/generated.html"
+reference_img = Image.open(reference_img_path)
+
+def generate_history_prompt(): 
+    history_prompt = f"Review the previous iterations to understand what changes have already been made. Here is the chat history:"
+    for i, message in enumerate(history, start=1):
+        history_prompt += f"\nIteration {i}: {message}"
+        return history_prompt
+
+# Few shot learning
+example_input_html = load_file_content('few-shot-learning/sample1/sample-input1.html')
+sample_output_html = load_file_content('few-shot-learning/sample1/sample-output1.html')
+sample_input_img = Image.open('few-shot-learning/sample1/sample-input1.png')
+sample_output_img = Image.open('few-shot-learning/sample1/sample-output1.png')
+
+def example_prompt(n):
+    exmaple =   f"""
+                    <EXAMPLE>
+                        INPUT HTML: {example_input_html}
+                        INPUT IMAGE is {n+1} attatched image
+                        OUTPUT GENERATED HTML: {sample_output_html}
+                        OUTPUT GENERATED IMAGE is {n+2} attatched image
+                    </EXAMPLE>
+                """
+    return exmaple
 
 chat_session = model.start_chat(history=[
-    # Content(role="user", parts=[Part(text=example_prompt)]),
-    # Content(role="model", parts=[Part(text=example_response)])
+    # genai.Message(role="user", text=sample_prompt),
+    # genai.Message(role="model", text=sample_output_html)
 ])
 
-# Prompt
-context =   """ 
-            You are a generator who takes in html and css code retreived from inspect element, 
-            as well as a render of the component. Your goal is to recreate this component. For all image components, don't recreate the content inside the image. Just fill the parent div of the img with grey.
-            For any image, comment out the html for the <img> component, add a comment above saying "Place image here". Ensure the css is encapsulated into the html. Rename the divs to be more general.
-            And instead, add an svg and text saying "image placeholder". 
-            Add a comment at the start and end of the placeholder code saying "placeholder image". For all urls, just convert them into empty strings (i.e. svg = ""). Important: only output the code, no additional text.
-            """
-# Keep doing actions like these to make the component as general and template like as possible, replacing text with header1, header2, etc etc. 
-# Rename the divs etc to make more general and template like. 
-
-
-html = """<div class="framer-rtm0D framer-18fox64 framer-v-18fox64 highlighted" data-framer-name="Desktop A" style="width: 100%; opacity: 1;"><div class="framer-76sdne" data-framer-name="Tabs" style="opacity: 1;"><div class="framer-qsd4di-container" style="opacity: 1;"><div class="framer-ivjHz framer-j6ddtg framer-v-wonpkm" data-framer-name="Active" data-highlight="true" style="background-color: rgba(97, 97, 97, 0.23); border-radius: 16px; width: 100%; opacity: 1;" tabindex="0"><div class="framer-1ew66qe" data-framer-name="Content" style="opacity: 1;"><div class="framer-1ua0ylq" data-framer-name="Text and supporting text" style="opacity: 1;"><div class="framer-j70d99" data-framer-name="Text" style="outline: none; display: flex; flex-direction: column; justify-content: flex-start; flex-shrink: 0; --extracted-r6o4lv: rgb(255, 255, 255); --framer-paragraph-spacing: 20px; transform: none; opacity: 1;" data-framer-component-type="RichTextContainer"><p style="--font-selector:R0Y7QmUgVmlldG5hbSBQcm8tNTAw;--framer-font-family:&quot;Be Vietnam Pro&quot;, &quot;Be Vietnam Pro Placeholder&quot;, sans-serif;--framer-font-size:22px;--framer-font-weight:500;--framer-letter-spacing:-0.03em;--framer-line-height:135%;--framer-text-color:var(--extracted-r6o4lv, rgb(255, 255, 255))" class="framer-text">Integrate your product development providers</p></div><div class="framer-cchw1j" data-framer-name="Supporting text" style="outline: none; display: flex; flex-direction: column; justify-content: flex-start; flex-shrink: 0; --extracted-r6o4lv: rgb(255, 255, 255); --framer-paragraph-spacing: 0px; transform: none; opacity: 1;" data-framer-component-type="RichTextContainer"><p style="--framer-letter-spacing:-0.02em;--framer-line-height:140%;--framer-text-color:var(--extracted-r6o4lv, rgb(255, 255, 255))" class="framer-text">Connect GitHub, GitLab, Azure DevOps, Bitbucket, Slack and Jira to Mimrr for seamless tracking of code and issue updates.</p></div></div></div></div></div><div class="framer-12bg141-container" style="opacity: 1;"><div class="framer-ivjHz framer-j6ddtg framer-v-j6ddtg" data-framer-name="Default" data-highlight="true" style="background-color: rgba(0, 0, 0, 0); border-radius: 16px; width: 100%; opacity: 1;" tabindex="0"><div class="framer-1ew66qe" data-framer-name="Content" style="opacity: 1;"><div class="framer-1ua0ylq" data-framer-name="Text and supporting text" style="opacity: 1;"><div class="framer-j70d99" data-framer-name="Text" style="outline: none; display: flex; flex-direction: column; justify-content: flex-start; flex-shrink: 0; --extracted-r6o4lv: rgba(255, 255, 255, 0.35); --framer-paragraph-spacing: 20px; transform: none; opacity: 1;" data-framer-component-type="RichTextContainer"><p style="--font-selector:R0Y7QmUgVmlldG5hbSBQcm8tNTAw;--framer-font-family:&quot;Be Vietnam Pro&quot;, &quot;Be Vietnam Pro Placeholder&quot;, sans-serif;--framer-font-size:22px;--framer-font-weight:500;--framer-letter-spacing:-0.03em;--framer-line-height:135%;--framer-text-color:var(--extracted-r6o4lv, rgba(255, 255, 255, 0.35))" class="framer-text">Setup your project and onboard your team</p></div><div class="framer-cchw1j" data-framer-name="Supporting text" style="outline: none; display: flex; flex-direction: column; justify-content: flex-start; flex-shrink: 0; --extracted-r6o4lv: rgba(224, 224, 224, 0.35); --framer-paragraph-spacing: 0px; transform: none; opacity: 1;" data-framer-component-type="RichTextContainer"><p style="--framer-letter-spacing:-0.02em;--framer-line-height:140%;--framer-text-color:var(--extracted-r6o4lv, rgba(224, 224, 224, 0.35))" class="framer-text">Add a code repository, ticket/issues group, communications channel and product team to your project.</p></div></div></div></div></div><div class="framer-1288w3b-container" style="opacity: 1;"><div class="framer-ivjHz framer-j6ddtg framer-v-j6ddtg" data-framer-name="Default" data-highlight="true" style="background-color: rgba(0, 0, 0, 0); border-radius: 16px; width: 100%; opacity: 1;" tabindex="0"><div class="framer-1ew66qe" data-framer-name="Content" style="opacity: 1;"><div class="framer-1ua0ylq" data-framer-name="Text and supporting text" style="opacity: 1;"><div class="framer-j70d99" data-framer-name="Text" style="outline: none; display: flex; flex-direction: column; justify-content: flex-start; flex-shrink: 0; --extracted-r6o4lv: rgba(255, 255, 255, 0.35); --framer-paragraph-spacing: 20px; transform: none; opacity: 1;" data-framer-component-type="RichTextContainer"><p style="--font-selector:R0Y7QmUgVmlldG5hbSBQcm8tNTAw;--framer-font-family:&quot;Be Vietnam Pro&quot;, &quot;Be Vietnam Pro Placeholder&quot;, sans-serif;--framer-font-size:22px;--framer-font-weight:500;--framer-letter-spacing:-0.03em;--framer-line-height:135%;--framer-text-color:var(--extracted-r6o4lv, rgba(255, 255, 255, 0.35))" class="framer-text">Finally, See Mimrr in action</p></div><div class="framer-cchw1j" data-framer-name="Supporting text" style="outline: none; display: flex; flex-direction: column; justify-content: flex-start; flex-shrink: 0; --extracted-r6o4lv: rgba(224, 224, 224, 0.35); --framer-paragraph-spacing: 0px; transform: none; opacity: 1;" data-framer-component-type="RichTextContainer"><p style="--framer-letter-spacing:-0.02em;--framer-line-height:140%;--framer-text-color:var(--extracted-r6o4lv, rgba(224, 224, 224, 0.35))" class="framer-text">Effortlessly automate unit test, codebase documentation, writing tickets, reporting requirements, PR reviews, etc.</p></div></div></div></div></div></div><div class="framer-45n3gc" data-framer-name="Image Container" style="border-radius: 13px; opacity: 1;"><div class="framer-v06fyg" data-border="true" data-framer-name="tab_image_01" style="--border-bottom-width: 2px; --border-color: rgb(97, 97, 97); --border-left-width: 2px; --border-right-width: 2px; --border-style: solid; --border-top-width: 2px; border-radius: 12px; opacity: 1;"><div style="position:absolute;border-radius:inherit;top:0;right:0;bottom:0;left:0" data-framer-background-image-wrapper="true"><img decoding="async" loading="lazy" sizes="max((min(73.4286vw - 160px, 1280px) - 56px) / 2, 1px)" srcset="https://framerusercontent.com/images/5TQFlpnABJ8MmFnqwnDnO5Mo7c.png?scale-down-to=1024 1023w,https://framerusercontent.com/images/5TQFlpnABJ8MmFnqwnDnO5Mo7c.png?scale-down-to=2048 2047w,https://framerusercontent.com/images/5TQFlpnABJ8MmFnqwnDnO5Mo7c.png 2051w" src="https://framerusercontent.com/images/5TQFlpnABJ8MmFnqwnDnO5Mo7c.png?scale-down-to=1024" alt="" style="display:block;width:100%;height:100%;border-radius:inherit;object-position:center;object-fit:cover" class=""></div></div></div></div>"""
-css = """{
-  "backgroundColor": "rgba(0, 0, 0, 0)",
-  "border": "0px none rgb(0, 0, 0)",
-  "borderRadius": "0px",
-  "color": "rgb(0, 0, 0)",
-  "fontFamily": "sans-serif",
-  "fontSize": "12px",
-  "fontWeight": "400",
-  "height": "612.586px",
-  "margin": "0px",
-  "padding": "0px",
-  "width": "1279.99px"
-} """
-
-task =  """ 
-        Here is the html: {html}. Here is the css: {css}. 
-        The rendered image provided is how the component should look.
-        """ 
-
-# Multimodal: Upload Image
-image_path = "images/tmp.png" 
-try:
-    image = Image.open(image_path)
-except FileNotFoundError:
-    print(f"Error: Image file not found at {image_path}")
-    exit()
-except Exception as e:
-    print(f"Error opening image: {e}")
-    exit()
-
-
-# Send prompt
-prompt = "Here is your role: {context}. Here is your task: {task}."  
-def load_file_content(filepath):
-    try:
-        with open(filepath, "r", encoding="utf-8") as f:  # Explicit encoding
-            return f.read()
-    except FileNotFoundError:
-        print(f"Error: File not found at {filepath}")
-        return None
-    except Exception as e:
-        print(f"Error reading file {filepath}: {e}")
-        return None
-
-tmp_html = load_file_content('./sample.html')
-tmp_css = load_file_content('./sample.css')
-history = [] 
+# ----- Iteration 1 -----
+print('1')
+input_html = load_file_content('data/reference.html')
+prompt =f"""
+            You are an expert front end web developer. Your job is to generate html and css to recreate the following component: {input_html} 
+            and ensure it looks like the render of the component (attached image). Only output html+css as it output will directly be rendered.
+        """
+instruction_1 = f""" 
+                    Integrate css into html. 
+                    Replace all <img> components with a plain div that says 'placeholder' in the center, in a contrasting colour to the div colour. 
+                    Do not recreate the <img> components. Ensure all the colours match the image, including the font colours. 
+                    Ensure the dimensions are the same relative to the image and match the image. 
+                    Do not hardcode pixel sizes, use relative positioning and sizing to make the component responsive. 
+                    The goal is to recreate the image with html + css.
+                """
 contents = [
-    # context,
-    # prompt,
-    "generate me html and css to recreate the following component. {tmp_html} {tmp_css}. Integrate css into html. Replace all <img> components with a plain div that says 'placeholder' in the center. Do not recreate the <img> components. Ensure all the colours match the image, including the font colours. Ensure the dimensions are the same and match the image. Goal is to recreate the image with html + css.",
-    image
+    prompt,
+    instruction_1,
+    example_prompt(1),
+    reference_img,
+    sample_input_img,
+    sample_output_img
+
 ]
 
-print('Sending...')
-generated_html = chat_session.send_message(contents).text
-
-with open("generated.html", "w", encoding="utf-8") as file:
+# Processing results
+generated_html = re.sub(r'^```html\s*|```$', '', chat_session.send_message(contents).text)
+history.append({"request": instruction_1, "response": generated_html})
+with open(generated_html_path, "w", encoding="utf-8") as file:
     file.write(generated_html)
-
-render_html(generated_html)
-print(generated_html)
-compare_images("images/generated_component.png", image_path)
+render_html(generated_html, generated_image_path, reference_img_path)
 
 
-history.append({"request":"generate me html and css to recreate the following component. Integrate css into html. Replace all <img> components with a plain div that says 'placeholder' in the center. Do not recreate the <img> components. Ensure all the colours match the image, including the font colours. Ensure the dimensions are the same and match the image. Goal is to recreate the image with html + css.", "response": generated_html})
+# ----- Iteration 2 -----
+print('2')
+input_html = load_file_content(generated_html_path)
+input_img = Image.open(generated_image_path)
 
-new_html = load_file_content('./generated.html')
+prompt =f"""
+            You are an expert front end web developer. Your job is to adjust the following html/css: {input_html} 
+            so that it's corresponding render (the first attached image) resembles the target render of the component (the second attached image) better: {reference_img}.
+        """
+
+instruction_2 = f"""Adjust the html structure css colours. Extract pixels to get the exact same font colours. 
+                    Use inline style elements to directly change the colour of the text. 
+                    Ensure the dimensions and positioning of the elements also resemble the image.
+                """
 
 contents = [
-    # context,
-    # prompt,
-    f"Adjust the following css colours: {new_html} so that the corresponding image: {Image.open('images/generated_component.png')} has font colourd that match the font colours the desired image: {image}. Extract pixels to get yhe exact same font colours. Use inline style elements to directory change the colour of the text.",
-    f"Here is the chat history to understand the work done before: {history[0]}"
+    prompt,
+    instruction_2,
+    generate_history_prompt(),
+    example_prompt(2),
+    input_img,
+    reference_img,
+    reference_img,
+    sample_input_img,
+    sample_output_img
+
 ]
 
-generated_html = chat_session.send_message(contents).text
-
-with open("generated.html", "w", encoding="utf-8") as file:
+# Processing results
+generated_html = re.sub(r'^```html\s*|```$', '', chat_session.send_message(contents).text)
+history.append({"request": instruction_2, "response": generated_html})
+with open(generated_html_path, "w", encoding="utf-8") as file:
     file.write(generated_html)
-
-render_html(generated_html)
-print(generated_html)
-compare_images("images/generated_component.png", image_path)
+render_html(generated_html, generated_image_path, reference_img_path)
 
 
+# ----- Iteration 3 -----
+print('3')
+input_html = load_file_content(generated_html_path)
+input_img = Image.open(generated_image_path)
+instruction_3 = f"Adjust the fonts, and colours in the html/css if needed to make the generated render (first image attached) resemble the target render of the component (second attached image)."
+
+contents = [
+    prompt,
+    instruction_3,
+    generate_history_prompt(),
+    example_prompt(2),
+    input_img,
+    reference_img,
+    sample_input_img,
+    sample_output_img
+]
+
+# Processing results
+generated_html = re.sub(r'^```html\s*|```$', '', chat_session.send_message(contents).text)
+history.append({"request": instruction_3, "response": generated_html})
+with open(generated_html_path, "w", encoding="utf-8") as file:
+    file.write(generated_html)
+render_html(generated_html, generated_image_path, reference_img_path)
