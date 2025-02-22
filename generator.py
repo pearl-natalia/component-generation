@@ -24,9 +24,9 @@ model = genai.GenerativeModel(
 
 # Setting up generator
 history = [] 
-reference_img_path = "data/reference.png"
-generated_image_path = "data/generated.png"
-generated_html_path = "data/generated.html"
+reference_img_path = "output/reference.png"
+generated_image_path = "output/generated.png"
+generated_html_path = "output/generated.html"
 reference_img = Image.open(reference_img_path)
 
 def generate_history_prompt(): 
@@ -59,7 +59,7 @@ chat_session = model.start_chat(history=[
 
 # ----- Iteration 1 -----
 print('1')
-input_html = load_file_content('data/reference.html')
+input_html = load_file_content('output/reference.html')
 prompt =f"""
             You are an expert front end web developer. Your job is to generate html and css to recreate the following component: {input_html} 
             and ensure it looks like the render of the component (attached image). Only output html+css as it output will directly be rendered.
