@@ -52,8 +52,6 @@ document.addEventListener("click", (event) => {
         console.log("html2canvas:", window.html2canvas);
 
         const element = document.querySelector(".highlighted");
-        const cloned = element.cloneNode(true);
-        document.body.appendChild(cloned);
 
 
         html2canvas(document.querySelector(".highlighted"), {
@@ -65,13 +63,11 @@ document.addEventListener("click", (event) => {
             // Convert canvas to data URL
             const imageData = canvas.toDataURL("image/png");
 
-            // Create a download link
+            // Create a download link without appending anything to the DOM
             const link = document.createElement("a");
             link.href = imageData;
-            link.download = "screenshot.png"; // Set download filename
-            document.body.appendChild(link); // Append link to body
-            link.click(); // Simulate click to trigger download
-            document.body.removeChild(link); // Remove link after download
+            link.download = "screenshot.png";
+            link.click(); // Directly trigger the download
 
             // Send captured image data to background script (optional)
             chrome.runtime.sendMessage({
@@ -81,6 +77,8 @@ document.addEventListener("click", (event) => {
         }).catch((error) => {
             console.error("Screenshot capture failed:", error);
         });
+
+
 
     } else {
         console.error("html2canvas is not loaded.");
