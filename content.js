@@ -49,22 +49,31 @@ document.addEventListener("click", (event) => {
     }
 
     if (typeof html2canvas !== "undefined") {
+        console.log("html2canvas:", window.html2canvas);
+
         const element = document.querySelector(".highlighted");
         const cloned = element.cloneNode(true);
         document.body.appendChild(cloned);
 
 
         html2canvas(document.querySelector(".highlighted"), {
-            useCORS: true, // Allows capturing images from external sources (if CORS is enabled)
-            logging: false, // Disable console logs from html2canvas
-            scale: window.devicePixelRatio, // Higher quality screenshot
+            useCORS: true,
+            logging: false,
+            scale: window.devicePixelRatio,
             backgroundColor: null
         }).then((canvas) => {
-            document.body.removeChild(cloned);
-            document.body.appendChild(canvas);
-            const imageData = canvas.toDataURL("image/png"); // Convert to base64 image
+            // Convert canvas to data URL
+            const imageData = canvas.toDataURL("image/png");
 
-            // Send captured image data to background script
+            // Create a download link
+            const link = document.createElement("a");
+            link.href = imageData;
+            link.download = "screenshot.png"; // Set download filename
+            document.body.appendChild(link); // Append link to body
+            link.click(); // Simulate click to trigger download
+            document.body.removeChild(link); // Remove link after download
+
+            // Send captured image data to background script (optional)
             chrome.runtime.sendMessage({
                 action: "captureScreen",
                 screenshot: imageData
@@ -72,6 +81,7 @@ document.addEventListener("click", (event) => {
         }).catch((error) => {
             console.error("Screenshot capture failed:", error);
         });
+
     } else {
         console.error("html2canvas is not loaded.");
     }
