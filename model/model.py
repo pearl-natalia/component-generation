@@ -2,7 +2,7 @@ import os, re, time
 import google.generativeai as genai
 from PIL import Image
 from dotenv import load_dotenv
-from render import render_html, load_file_content
+from model.render import render_html, load_file_content
 
 # CONSTANTS
 REFERENCE_IMG_PATH = "results/reference.png"

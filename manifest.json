@@ -13,7 +13,7 @@
     "http://127.0.0.1:5000/"
   ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "extension/background.js"
   },
   "content_scripts": [
     {
@@ -22,15 +22,15 @@
       ],
       "js": [
         "libs/html2canvas.min.js",
-        "content.js"
+        "extension/content.js"
       ],
       "css": [
-        "styles.css"
+        "extension/styles.css"
       ]
     }
   ],
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "extension/popup.html"
   },
   "content_security_policy": {
     "script-src": "'self' 'unsafe-eval'",

@@ -3,7 +3,7 @@ import subprocess
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from threading import Lock
-from model import format_css
+from model.model import format_css
 
 app = Flask(__name__)
 CORS(app)
@@ -20,11 +20,11 @@ def upload_component():
         html_content = data.get('html')
         css_content = data.get('styles')
 
-        with open("output/reference.html", "w") as file:
+        with open("results/reference.html", "w") as file:
             file.write(f"{html_content}\n<style>\n{format_css(css_content)}\n</style>")
 
         print("Component saved. Running model.py...")
-        result = subprocess.run(["python3", "model.py"], capture_output=True, text=True)
+        result = subprocess.run(["python3", "model/model.py"], capture_output=True, text=True)
 
         return jsonify({"message": "Component received and processed!", "output": result.stdout}), 200
 
@@ -44,7 +44,7 @@ def process_image():
         try:
             image_binary = base64.b64decode(image_data)
 
-            output_path = 'output/reference.png'
+            output_path = 'results/reference.png'
 
             with open(output_path, 'wb') as f:
                 f.write(image_binary)
