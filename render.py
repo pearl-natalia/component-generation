@@ -6,6 +6,17 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 
+def load_file_content(filepath):
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        print(f"Error: File not found at {filepath}")
+        return None
+    except Exception as e:
+        print(f"Error reading file {filepath}: {e}")
+        return None
+        
 def render_html(html, output_image_path, reference_img_path):
     # Setup Selenium WebDriver
     options = Options()
@@ -33,14 +44,3 @@ def render_html(html, output_image_path, reference_img_path):
     sleep(3)
     driver.save_screenshot(output_image_path)
     driver.quit()
-
-def load_file_content(filepath):
-    try:
-        with open(filepath, "r", encoding="utf-8") as f:
-            return f.read()
-    except FileNotFoundError:
-        print(f"Error: File not found at {filepath}")
-        return None
-    except Exception as e:
-        print(f"Error reading file {filepath}: {e}")
-        return None

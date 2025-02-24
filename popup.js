@@ -6,8 +6,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            // Send data to Flask backend
-            fetch("http://127.0.0.1:5000/upload", {
+            // Send data to Flask
+            fetch("http://127.0.0.1:5000/fetch-html", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ html: data.capturedHtml, styles: data.capturedStyles })

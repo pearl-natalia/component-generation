@@ -1,8 +1,14 @@
-import os, re
+import os, re, time
 import google.generativeai as genai
 from PIL import Image
 from dotenv import load_dotenv
 from render import render_html, load_file_content
+
+# CONSTANTS
+REFERENCE_IMG_PATH = "results/reference.png"
+REFERENCE_HTML_PATH = "results/reference.html"
+GENERATED_IMG_PATH = "results/generated.png"
+GENERATED_HTML_PATH = "results/generated.html"
 
 def format_css(css):
     load_dotenv()
@@ -65,10 +71,7 @@ def main():
 
 
     # Setting up generator
-    reference_img_path = "output/reference.png"
-    generated_image_path = "output/generated.png"
-    generated_html_path = "output/generated.html"
-    reference_img = Image.open(reference_img_path)
+    reference_img = Image.open(REFERENCE_IMG_PATH)
 
     def generate_history_prompt(): 
         history_prompt = f"Review the previous iterations to understand what changes have already been made. Here is the chat history:"
@@ -79,9 +82,9 @@ def main():
     def process_results(instruction):
         generated_html = re.sub(r'^```html\s*|```$', '', chat_session.send_message(contents).text)
         history.append({"request": instruction, "response": generated_html})
-        with open(generated_html_path, "w", encoding="utf-8") as file:
+        with open(GENERATED_HTML_PATH, "w", encoding="utf-8") as file:
             file.write(generated_html)
-        render_html(generated_html, generated_image_path, reference_img_path)
+        render_html(generated_html, GENERATED_IMG_PATH, REFERENCE_IMG_PATH)
 
 
 
@@ -105,10 +108,12 @@ def main():
 
     # ----- Iteration 1 -----
     print('1')
-    input_html = load_file_content('output/reference.html')
+    input_html = load_file_content(REFERENCE_HTML_PATH)
     prompt =f"""
-                You are an expert front end web developer. Your job is to generate html and css to recreate the following component: {input_html} 
-                and ensure it looks like the render of the component (attached image). Only output html+css as it output will directly be rendered.
+                You are an expert front end web developer. Your job is to generate html and css to recreate the following component: (image attatched). 
+                you can use the following html as a starting point, but you may move around the structue if needed to better resemble the image. 
+                Ensure the generated component looks like the render of the component (attatched image). Here is the html: {input_html}. 
+                Only output html+css as it output will directly be rendered.
             """
     instruction_1 = f""" 
                         Integrate css into html. 
@@ -133,15 +138,15 @@ def main():
 
     # ----- Iteration 2 -----
     print('2')
-    input_html = load_file_content(generated_html_path)
-    input_img = Image.open(generated_image_path)
+    input_html = load_file_content(GENERATED_HTML_PATH)
+    input_img = Image.open(GENERATED_IMG_PATH)
 
     prompt =f"""
                 You are an expert front end web developer. Your job is to adjust the following html/css: {input_html} 
                 so that it's corresponding render (the first attached image) resembles the target render of the component (the second attached image) better: {reference_img}.
             """
 
-    instruction_2 = f"""Adjust the html structure css colours. Extract pixels to get the exact same font colours. 
+    instruction_2 = f"""Adjust the html structure and css colours. Extract pixels to get the exact same font colours. 
                         Use inline style elements to directly change the colour of the text. 
                         Ensure the dimensions and positioning of the elements also resemble the image.
                     """
@@ -164,8 +169,8 @@ def main():
 
     # ----- Iteration 3 -----
     print('3')
-    input_html = load_file_content(generated_html_path)
-    input_img = Image.open(generated_image_path)
+    input_html = load_file_content(GENERATED_HTML_PATH)
+    input_img = Image.open(GENERATED_IMG_PATH)
     instruction_3 = f"Adjust the fonts, and colours in the html/css if needed to make the generated render (first image attached) resemble the target render of the component (second attached image)."
 
     contents = [
@@ -183,4 +188,17 @@ def main():
     process_results(instruction_3)
 
 if __name__ == '__main__':
+    timer = 10  
+
+    # Stall until reference html and image are loaded or timer runs out
+    while timer > 0 and not (os.path.exists(REFERENCE_HTML_PATH) and os.path.exists(REFERENCE_IMG_PATH)):
+        print("Waiting for files to appear...")
+        time.sleep(1)  
+        timer -= 1  
+
+    if timer == 0:
+        print("Files not found. Exiting...")
+        exit()
+
+    print("Starting generation...")
     main()
