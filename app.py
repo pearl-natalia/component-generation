@@ -1,4 +1,4 @@
-import base64
+import base64, os
 import subprocess
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -24,7 +24,9 @@ def upload_component():
             file.write(f"{html_content}\n<style>\n{format_css(css_content)}\n</style>")
 
         print("Component saved. Running model.py...")
-        result = subprocess.run(["python3", "model/model.py"], capture_output=True, text=True)
+        model_path = os.path.join(os.getcwd(), "model", "model.py")
+
+        result = subprocess.run(["python3", model_path], capture_output=True, text=True)
 
         return jsonify({"message": "Component received and processed!", "output": result.stdout}), 200
 

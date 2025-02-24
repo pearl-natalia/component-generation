@@ -2,13 +2,14 @@ import os, re, time
 import google.generativeai as genai
 from PIL import Image
 from dotenv import load_dotenv
-from model.render import render_html, load_file_content
+from render import render_html, load_file_content
 
 # CONSTANTS
-REFERENCE_IMG_PATH = "results/reference.png"
-REFERENCE_HTML_PATH = "results/reference.html"
-GENERATED_IMG_PATH = "results/generated.png"
-GENERATED_HTML_PATH = "results/generated.html"
+REFERENCE_IMG_PATH = os.path.abspath(os.path.join(os.getcwd(), "..", "results", "reference.png"))
+REFERENCE_HTML_PATH = os.path.abspath(os.path.join(os.getcwd(), "..", "results", "reference.html"))
+GENERATED_IMG_PATH = os.path.abspath(os.path.join(os.getcwd(), "..", "results", "generated.png"))
+GENERATED_HTML_PATH = os.path.abspath(os.path.join(os.getcwd(), "..", "results", "generated.html"))
+
 
 def format_css(css):
     load_dotenv()
@@ -89,15 +90,15 @@ def main():
 
 
     # Few shot learning
-    example_input_html = load_file_content('few-shot-learning/sample1/sample-input1.html')
-    sample_output_html = load_file_content('few-shot-learning/sample1/sample-output1.html')
-    sample_input_img = Image.open('few-shot-learning/sample1/sample-input1.png')
-    sample_output_img = Image.open('few-shot-learning/sample1/sample-output1.png')
+    sample_input_html = load_file_content(os.path.abspath(os.path.join(os.getcwd(), "..", "few-shot-learning", "sample1", "sample-input1.html")))
+    sample_output_html = load_file_content(os.path.abspath(os.path.join(os.getcwd(), "..", "few-shot-learning", "sample1", "sample-output1.html")))
+    sample_input_img = Image.open(os.path.abspath(os.path.join(os.getcwd(), "..", "few-shot-learning", "sample1", "sample-input1.png")))
+    sample_output_img = Image.open(os.path.abspath(os.path.join(os.getcwd(), "..", "few-shot-learning", "sample1", "sample-output1.png")))
 
     def example_prompt(n):
         example =   f"""
                         <EXAMPLE>
-                            INPUT HTML: {example_input_html}
+                            INPUT HTML: {sample_input_html}
                             INPUT IMAGE is {n+1} attatched image
                             OUTPUT GENERATED HTML: {sample_output_html}
                             OUTPUT GENERATED IMAGE is {n+2} attatched image
